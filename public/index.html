@@ -1,706 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GDP Chatting thingy</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        
-        :root {
-            --primary-gradient: linear-gradient(135deg, #6e45e2, #88d3ce);
-            --button-bg: #6e45e2;
-            --button-hover: #5a35c0;
-            --modal-button-bg: #ff8c00;
-            --modal-button-hover: #ff6700;
-            --footer-bg: rgba(0, 0, 0, 0.3);
-            --message-bg-base: rgba(255, 255, 255, 0.9);
-            --text-color: #333;
-            --shadow-color: rgba(0, 0, 0, 0.2);
-            --modal-bg: #fff;
-            --modal-text: #000;
-            --user-list-bg: rgba(255, 255, 255, 0.2);
-            --header-bg: rgba(110, 69, 226, 0.9);
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Press Start 2P', cursive, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: var(--primary-gradient);
-            color: var(--text-color);
-            line-height: 1.6;
-            overflow: hidden;
-        }
-        
-        .app-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        
-        header {
-            padding: 1rem;
-            text-align: center;
-            font-size: 1rem;
-            background: var(--header-bg);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-        
-        #user-info {
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        #change-nickname {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.6rem;
-            transition: all 0.3s;
-        }
-        
-        #change-nickname:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
-        }
-        
-        #messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-        }
-        
-        .message {
-            padding: 0.8rem 1rem;
-            border-radius: 1rem;
-            max-width: 80%;
-            animation: fadeIn 0.5s ease;
-            box-shadow: 0 4px 8px var(--shadow-color);
-            word-wrap: break-word;
-            background: var(--message-bg-base);
-        }
-        
-        .message--self {
-            align-self: flex-end;
-            background: #d1f7c4;
-        }
-        
-        .message--system {
-            align-self: center;
-            background: rgba(255, 240, 180, 0.9);
-            font-style: italic;
-            text-align: center;
-            max-width: 90%;
-        }
-        
-        .nickname {
-            font-weight: bold;
-            margin-right: 0.5rem;
-        }
-        
-        .timestamp {
-            font-size: 0.6rem;
-            opacity: 0.7;
-            margin-top: 0.5rem;
-            display: block;
-        }
-        
-        footer {
-            display: flex;
-            padding: 0.8rem;
-            background: var(--footer-bg);
-            backdrop-filter: blur(10px);
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        #message-input {
-            flex: 1;
-            padding: 0.8rem;
-            border: 2px solid transparent;
-            border-radius: 0.5rem;
-            font-size: 0.9rem;
-            font-family: inherit;
-            background: rgba(255, 255, 255, 0.9);
-        }
-        
-        #message-input:focus {
-            outline: none;
-            border-color: var(--button-bg);
-        }
-        
-        #send-button {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            background: var(--button-bg);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: inherit;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        #send-button:hover {
-            background: var(--button-hover);
-            transform: scale(1.05);
-        }
-        
-        #send-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(1rem);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .confetti {
-            position: fixed;
-            width: 0.8rem;
-            height: 0.8rem;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: fall 2s linear forwards;
-            z-index: 1000;
-        }
-        
-        @keyframes fall {
-            0% {
-                transform: translateY(0) rotate(0deg);
-            }
-            100% {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-        
-        /* Nickname modal */
-        #nickname-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        #nickname-modal-content {
-            background: var(--modal-bg);
-            color: var(--modal-text);
-            padding: 2rem;
-            border-radius: 1rem;
-            text-align: center;
-            max-width: 90%;
-            width: 25rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        
-        #nickname-modal-content h2 {
-            margin-bottom: 1.5rem;
-            color: var(--button-bg);
-        }
-        
-        #nickname-input {
-            padding: 0.8rem;
-            font-size: 1rem;
-            width: 100%;
-            margin-bottom: 1rem;
-            border-radius: 0.5rem;
-            border: 2px solid #ddd;
-            font-family: inherit;
-            text-align: center;
-        }
-        
-        #nickname-input:focus {
-            outline: none;
-            border-color: var(--modal-button-bg);
-        }
-        
-        #nickname-submit-button {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            background: var(--modal-button-bg);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.3s;
-        }
-        
-        #nickname-submit-button:hover {
-            background: var(--modal-button-hover);
-            transform: scale(1.05);
-        }
-        
-        /* Emoji picker */
-        #emoji-picker {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            max-width: 12rem;
-        }
-        
-        .emoji-button {
-            cursor: pointer;
-            font-size: 1.2rem;
-            background: none;
-            border: none;
-            padding: 0.3rem;
-            transition: transform 0.2s;
-        }
-        
-        .emoji-button:hover {
-            transform: scale(1.3);
-        }
-        
-        /* Message counter */
-        #message-counter {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            min-width: 5rem;
-            text-align: right;
-        }
-        
-        /* User list */
-        #users-sidebar {
-            width: 200px;
-            background: var(--user-list-bg);
-            padding: 1rem;
-            overflow-y: auto;
-            border-left: 2px solid rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            backdrop-filter: blur(5px);
-        }
-        
-        #users-sidebar h3 {
-            margin: 0 0 1rem 0;
-            text-align: center;
-            font-size: 0.9rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid rgba(0, 0, 0, 0.2);
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-        
-        #users-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        #users-list li {
-            padding: 0.7rem 0.5rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.5rem;
-            background: rgba(255, 255, 255, 0.9);
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        #users-list li::before {
-            content: "•";
-            color: #4caf50;
-            font-size: 1.5rem;
-        }
-        
-        #users-list li.highlight {
-            background: rgba(110, 69, 226, 0.2);
-            font-weight: bold;
-        }
-        
-        /* Responsive design */
-        @media (max-width: 768px) {
-            header {
-                font-size: 0.8rem;
-                padding: 0.8rem;
-            }
-            
-            .message {
-                max-width: 90%;
-                font-size: 0.8rem;
-            }
-            
-            footer {
-                flex-wrap: wrap;
-            }
-            
-            #emoji-picker {
-                order: 3;
-                margin-top: 0.5rem;
-                margin-left: 0;
-                max-width: 100%;
-                width: 100%;
-                justify-content: center;
-            }
-            
-            #users-sidebar {
-                display: none;
-            }
-        }
-        
-        /* Scrollbar styling */
-        #messages-container::-webkit-scrollbar {
-            width: 0.5rem;
-        }
-        
-        #messages-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 0.5rem;
-        }
-        
-        #messages-container::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 0.5rem;
-        }
-        
-        #messages-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.3);
-        }
-        
-        /* Notification */
-        .notification {
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            text-align: center;
-            padding: 0.7rem;
-            margin: 0.5rem 0;
-            border-radius: 0.5rem;
-            font-style: italic;
-            font-size: 0.8rem;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GDP Global Chat</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-u2mCwzF5Tkz2vprc8zAaZ9UpECY17s8hv/9xZQt6jD3Hg0SbhOiTLwALt6hrZf+X" crossorigin="anonymous"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+    --primary-gradient: linear-gradient(135deg, #6e45e2, #88d3ce);
+    --button-bg: #6e45e2;
+    --button-hover: #5a35c0;
+    --modal-button-bg: #ff8c00;
+    --modal-button-hover: #ff6700;
+    --footer-bg: rgba(0, 0, 0, 0.3);
+    --message-bg-base: rgba(255, 255, 255, 0.9);
+    --text-color: #333;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --modal-bg: #fff;
+    --modal-text: #000;
+    --user-list-bg: rgba(255, 255, 255, 0.2);
+    --header-bg: rgba(110, 69, 226, 0.9);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Press Start 2P', cursive, sans-serif; height: 100vh; display: flex; flex-direction: column; background: var(--primary-gradient); color: var(--text-color); line-height: 1.6; overflow: hidden; }
+
+.app-container { display: flex; flex: 1; overflow: hidden; }
+
+header {
+    padding: 1rem; text-align: center; font-size: 1rem;
+    background: var(--header-bg); color: white;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+#user-info { font-size: 0.7rem; display: flex; align-items: center; gap: 10px; }
+
+#change-nickname { background: rgba(255,255,255,0.2); border: none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-family:inherit; font-size:0.6rem; transition:all 0.3s; }
+#change-nickname:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+
+#messages-container {
+    flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.8rem;
+    background: rgba(255,255,255,0.1); backdrop-filter: blur(5px);
+}
+
+.message {
+    padding:0.8rem 1rem; border-radius:1rem; max-width:80%;
+    box-shadow:0 4px 8px var(--shadow-color); word-wrap:break-word;
+    background: var(--message-bg-base);
+    animation: popIn 0.5s ease forwards;
+}
+
+.message--self {
+    align-self:flex-end; background:#d1f7c4; animation: popInSelf 0.5s ease forwards;
+}
+
+.message--system {
+    align-self:center; background: rgba(255,240,180,0.9); font-style:italic; text-align:center; max-width:90%;
+}
+
+.nickname { font-weight:bold; margin-right:0.5rem; }
+.timestamp { font-size:0.6rem; opacity:0.7; margin-top:0.5rem; display:block; }
+
+footer {
+    display:flex; padding:0.8rem; background:var(--footer-bg); backdrop-filter:blur(10px);
+    align-items:center; gap:0.5rem;
+}
+
+#message-input {
+    flex:1; padding:0.8rem; border:2px solid transparent; border-radius:0.5rem;
+    font-size:0.9rem; font-family:inherit; background: rgba(255,255,255,0.9);
+}
+#message-input:focus { outline:none; border-color: var(--button-bg); }
+
+#send-button {
+    padding:0.8rem 1.5rem; border:none; border-radius:0.5rem;
+    background: var(--button-bg); color:white; font-weight:bold; cursor:pointer;
+    transition:all 0.3s; font-family:inherit; display:flex; align-items:center; gap:0.5rem;
+}
+#send-button:hover { background: var(--button-hover); transform:scale(1.05); }
+#send-button:disabled { background:#ccc; cursor:not-allowed; transform:none; }
+
+@keyframes popIn {
+    0% { transform: scale(0.5) translateY(1rem); opacity:0; }
+    60% { transform: scale(1.1) translateY(-0.3rem); opacity:1; }
+    100% { transform: scale(1) translateY(0); }
+}
+@keyframes popInSelf {
+    0% { transform: translateX(50%) scale(0.5); opacity:0; }
+    60% { transform: translateX(-10%) scale(1.1); opacity:1; }
+    100% { transform: translateX(0) scale(1); }
+}
+
+/* Confetti */
+.confetti {
+    position: fixed; width:0.8rem; height:0.8rem; border-radius:50%;
+    pointer-events:none; animation: fall 2s linear forwards; z-index:1000;
+}
+@keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(360deg); opacity:0; }
+}
+
+/* Modal */
+#nickname-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; }
+#nickname-modal-content { background: var(--modal-bg); color: var(--modal-text); padding:2rem; border-radius:1rem; text-align:center; max-width:90%; width:25rem; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+#nickname-modal-content h2 { margin-bottom:1.5rem; color:var(--button-bg); }
+#nickname-input { padding:0.8rem; font-size:1rem; width:100%; margin-bottom:1rem; border-radius:0.5rem; border:2px solid #ddd; font-family:inherit; text-align:center; }
+#nickname-input:focus { outline:none; border-color:var(--modal-button-bg); }
+#nickname-submit-button { padding:0.8rem 1.5rem; border:none; border-radius:0.5rem; background: var(--modal-button-bg); color:white; font-weight:bold; cursor:pointer; font-family:inherit; transition:all 0.3s; }
+#nickname-submit-button:hover { background: var(--modal-button-hover); transform:scale(1.05); }
+
+/* Emoji picker */
+#emoji-picker { display:flex; gap:0.5rem; flex-wrap:wrap; max-width:12rem; }
+.emoji-button { cursor:pointer; font-size:1.2rem; background:none; border:none; padding:0.3rem; transition:transform 0.2s; }
+.emoji-button:hover { transform:scale(1.3); }
+
+/* Users list */
+#users-sidebar { width:200px; background: var(--user-list-bg); padding:1rem; overflow-y:auto; border-left:2px solid rgba(0,0,0,0.1); display:flex; flex-direction:column; backdrop-filter:blur(5px); }
+#users-sidebar h3 { margin:0 0 1rem 0; text-align:center; font-size:0.9rem; padding-bottom:0.5rem; border-bottom:2px solid rgba(0,0,0,0.2); color:white; text-shadow:1px 1px 2px rgba(0,0,0,0.5); }
+#users-list { list-style:none; padding:0; margin:0; }
+#users-list li { padding:0.7rem 0.5rem; margin-bottom:0.5rem; border-radius:0.5rem; background: rgba(255,255,255,0.9); font-size:0.7rem; display:flex; align-items:center; gap:0.5rem; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+#users-list li.highlight { background: rgba(110,69,226,0.2); font-weight:bold; }
+
+/* Responsive */
+@media(max-width:768px){ header{ font-size:0.8rem; padding:0.8rem; } .message{ max-width:90%; font-size:0.8rem; } footer{ flex-wrap:wrap; } #emoji-picker{ order:3; margin-top:0.5rem; width:100%; justify-content:center; } #users-sidebar{ display:none; } }
+</style>
 </head>
 <body>
-    <header>
-        <div>GDP Chat</div>
-        <div id="user-info">
-            <span id="current-user">Guest</span>
-            <button id="change-nickname"><i class="fas fa-edit"></i> Change</button>
-        </div>
-    </header>
-    
-    <div class="app-container">
-        <main id="messages-container"></main>
-        
-        <aside id="users-sidebar">
-            <h3>Online Users</h3>
-            <ul id="users-list">
-                <!-- Users will be added here dynamically -->
-            </ul>
-        </aside>
+
+<header>
+    <div>GDP Chat</div>
+    <div id="user-info">
+        <span id="current-user">Guest</span>
+        <button id="change-nickname"><i class="fas fa-edit"></i> Change</button>
     </div>
-    
-    <footer>
-        <input type="text" id="message-input" placeholder="Type your message..." maxlength="200">
-        <div id="emoji-picker"></div>
-        <button id="send-button"><i class="fas fa-paper-plane"></i> Send</button>
-        <div id="message-counter">0/200</div>
-    </footer>
-    
-    <!-- Nickname modal -->
-    <div id="nickname-modal">
-        <div id="nickname-modal-content">
-            <h2>Enter Your Nickname</h2>
-            <input type="text" id="nickname-input" placeholder="Your nickname" maxlength="20">
-            <br>
-            <button id="nickname-submit-button">Enter Chat!</button>
-        </div>
+</header>
+
+<div class="app-container">
+    <main id="messages-container"></main>
+    <aside id="users-sidebar">
+        <h3>Online Users</h3>
+        <ul id="users-list"></ul>
+    </aside>
+</div>
+
+<footer>
+    <input type="text" id="message-input" placeholder="Type your message..." maxlength="200">
+    <div id="emoji-picker"></div>
+    <button id="send-button"><i class="fas fa-paper-plane"></i> Send</button>
+</footer>
+
+<!-- Nickname modal -->
+<div id="nickname-modal">
+    <div id="nickname-modal-content">
+        <h2>Enter Your Nickname</h2>
+        <input type="text" id="nickname-input" placeholder="Your nickname" maxlength="20">
+        <br>
+        <button id="nickname-submit-button">Enter Chat!</button>
     </div>
-    
-    <script>
-        // DOM Elements
-        const messagesContainer = document.getElementById('messages-container');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        const emojiPicker = document.getElementById('emoji-picker');
-        const messageCounter = document.getElementById('message-counter');
-        const nicknameModal = document.getElementById('nickname-modal');
-        const nicknameInput = document.getElementById('nickname-input');
-        const nicknameSubmitButton = document.getElementById('nickname-submit-button');
-        const changeNicknameButton = document.getElementById('change-nickname');
-        const currentUserElement = document.getElementById('current-user');
-        const usersList = document.getElementById('users-list');
-        
-        // User management
-        let currentUser = {
-            id: generateId(),
-            name: localStorage.getItem('nickname') || '',
-            color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`
-        };
-        
-        // Online users list
-        const onlineUsers = new Map();
-        
-        // Initialize the app
-        function init() {
-            if (currentUser.name) {
-                nicknameModal.style.display = 'none';
-                currentUserElement.textContent = currentUser.name;
-                currentUserElement.style.color = currentUser.color;
-                addUserToList(currentUser);
-            } else {
-                nicknameModal.style.display = 'flex';
-                nicknameInput.focus();
-            }
-            
-            setupEventListeners();
-            setupEmojiPicker();
-            updateMessageCounter();
-            
-            // Add welcome message
-            addSystemMessage("GDP chat lol");
-        }
-        
-        // Generate a unique ID for the user
-        function generateId() {
-            return Math.random().toString(36).substring(2) + Date.now().toString(36);
-        }
-        
-        // Set up event listeners
-        function setupEventListeners() {
-            // Nickname handling
-            nicknameSubmitButton.addEventListener('click', enterChat);
-            nicknameInput.addEventListener('keypress', e => {
-                if (e.key === 'Enter') enterChat();
-            });
-            
-            // Change nickname
-            changeNicknameButton.addEventListener('click', showNicknameModal);
-            
-            // Message sending
-            sendButton.addEventListener('click', sendMessage);
-            messageInput.addEventListener('keypress', e => {
-                if (e.key === 'Enter') sendMessage();
-            });
-            
-            // Message input events
-            messageInput.addEventListener('input', updateMessageCounter);
-        }
-        
-        // Set up emoji picker
-        function setupEmojiPicker() {
-          const emojis = ['💔', '🥀', '😭', '😂', '✌️', '🙏'];
-            
-            emojis.forEach(emoji => {
-                const button = document.createElement('button');
-                button.textContent = emoji;
-                button.className = 'emoji-button';
-                button.setAttribute('aria-label', `Add ${emoji} emoji`);
-                button.addEventListener('click', () => {
-                    messageInput.value += emoji;
-                    messageInput.focus();
-                    updateMessageCounter();
-                });
-                
-                emojiPicker.appendChild(button);
-            });
-        }
-        
-        // Update message counter
-        function updateMessageCounter() {
-            const length = messageInput.value.length;
-            messageCounter.textContent = `${length}/200`;
-            
-            if (length > 180) {
-                messageCounter.style.color = '#ff6f61';
-            } else {
-                messageCounter.style.color = '';
-            }
-        }
-        
-        // Show nickname modal
-        function showNicknameModal() {
-            nicknameModal.style.display = 'flex';
-            nicknameInput.value = currentUser.name;
-            nicknameInput.focus();
-        }
-        
-        // Enter chat with nickname
-        function enterChat() {
-            const inputNickname = nicknameInput.value.trim();
-            
-            if (!inputNickname) {
-                nicknameInput.style.borderColor = '#ff3b2f';
-                return;
-            }
-            
-            // If user already exists, remove old entry
-            if (currentUser.name) {
-                onlineUsers.delete(currentUser.id);
-            }
-            
-            // Update user info
-            currentUser.name = inputNickname;
-            localStorage.setItem('nickname', currentUser.name);
-            nicknameModal.style.display = 'none';
-            currentUserElement.textContent = currentUser.name;
-            currentUserElement.style.color = currentUser.color;
-            
-            // Add/update user in the list
-            addUserToList(currentUser);
-            
-            // Add welcome message
-            if (onlineUsers.size === 1) {
-                addSystemMessage(`Welcome to the chat, ${currentUser.name}! You're the first one here!`);
-            } else {
-                addSystemMessage(`${currentUser.name} has joined the chat!`);
-            }
-        }
-        
-        // Add user to the online users list
-        function addUserToList(user) {
-            onlineUsers.set(user.id, user);
-            updateUsersList();
-        }
-        
-        // Update users list display
-        function updateUsersList() {
-            usersList.innerHTML = '';
-            
-            onlineUsers.forEach(user => {
-                const userItem = document.createElement('li');
-                if (user.id === currentUser.id) {
-                    userItem.classList.add('highlight');
-                }
-                userItem.textContent = user.name;
-                userItem.style.color = user.color;
-                usersList.appendChild(userItem);
-            });
-        }
-        
-        // Add message to the chat
-        function addMessage(data) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message';
-            
-            // Add special class for our own messages
-            if (data.userId === currentUser.id) {
-                messageElement.classList.add('message--self');
-            }
-            
-            const timestamp = new Date().toLocaleTimeString();
-            
-            messageElement.innerHTML = `
-                <span class="nickname" style="color: ${data.color}">${data.nick}:</span> 
-                ${data.text}
-                <span class="timestamp">${timestamp}</span>
-            `;
-            
-            messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-            // Add confetti for certain keywords
-            if (/(ungasss|ungasss|ungas|)/i.test(data.text)) {
-                createConfetti();
-            }
-        }
-        
-        // Add system message
-        function addSystemMessage(text) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message message--system';
-            messageElement.textContent = text;
-            
-            messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-        
-        // Send message
-        function sendMessage() {
-            if (!currentUser.name) {
-                nicknameModal.style.display = 'flex';
-                return;
-            }
-            
-            const message = messageInput.value.trim();
-            
-            if (message === '') {
-                messageInput.focus();
-                return;
-            }
-            
-            // Add message to chat
-            addMessage({
-                nick: currentUser.name,
-                text: message,
-                color: currentUser.color,
-                userId: currentUser.id
-            });
-            
-            // Clear input
-            messageInput.value = '';
-            updateMessageCounter();
-        }
-        
-        // Create confetti effect
-        function createConfetti() {
-            for (let i = 0; i < 15; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.background = `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.width = (5 + Math.random() * 10) + 'px';
-                confetti.style.height = (5 + Math.random() * 10) + 'px';
-                confetti.style.animationDuration = (1 + Math.random() * 2) + 's';
-                
-                document.body.appendChild(confetti);
-                
-                // Remove confetti after animation completes
-                setTimeout(() => {
-                    if (confetti.parentNode) {
-                        confetti.parentNode.removeChild(confetti);
-                    }
-                }, 2000);
-            }
-        }
-        
-        // Initialize the application
-        init();
-    </script>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// DOM Elements
+const messagesContainer = document.getElementById('messages-container');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const emojiPicker = document.getElementById('emoji-picker');
+const messageCounter = document.getElementById('message-counter');
+const nicknameModal = document.getElementById('nickname-modal');
+const nicknameInput = document.getElementById('nickname-input');
+const nicknameSubmitButton = document.getElementById('nickname-submit-button');
+const changeNicknameButton = document.getElementById('change-nickname');
+const currentUserElement = document.getElementById('current-user');
+const usersList = document.getElementById('users-list');
+
+// Socket.io
+const socket = io();
+
+// User
+let currentUser = {
+  id: generateId(),
+  name: localStorage.getItem('nickname') || '',
+  color: `hsl(${Math.floor(Math.random()*360)},70%,50%)`
+};
+
+// Initialize
+function init() {
+  if(currentUser.name){
+    nicknameModal.style.display='none';
+    currentUserElement.textContent=currentUser.name;
+    currentUserElement.style.color=currentUser.color;
+  } else nicknameModal.style.display='flex';
+
+  setupEventListeners();
+  setupEmojiPicker();
+  updateMessageCounter();
+}
+
+// Utilities
+function generateId(){ return Math.random().toString(36).substring(2)+Date.now().toString(36); }
+function updateMessageCounter(){
+  const length = messageInput.value.length;
+  messageCounter.textContent = `${length}/200`;
+  messageCounter.style.color = length>180?'#ff6f61':'';
+}
+
+// Event listeners
+function setupEventListeners(){
+  nicknameSubmitButton.addEventListener('click', enterChat);
+  nicknameInput.addEventListener('keypress', e=>{ if(e.key==='Enter') enterChat(); });
+  changeNicknameButton.addEventListener('click', showNicknameModal);
+  sendButton.addEventListener('click', sendMessage);
+  messageInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendMessage(); });
+  messageInput.addEventListener('input', updateMessageCounter);
+}
+
+// Emoji picker
+function setupEmojiPicker(){
+  const emojis=['💔','🥀','😭','😂','✌️','🙏'];
+  emojis.forEach(emoji=>{
+    const btn=document.createElement('button');
+    btn.textContent=emoji;
+    btn.className='emoji-button';
+    btn.addEventListener('click',()=>{ 
+      messageInput.value+=emoji; 
+      messageInput.focus(); 
+      updateMessageCounter(); 
+    });
+    emojiPicker.appendChild(btn);
+  });
+}
+
+// Nickname modal
+function showNicknameModal(){ 
+  nicknameModal.style.display='flex'; 
+  nicknameInput.value=currentUser.name; 
+  nicknameInput.focus(); 
+}
+
+function enterChat(){
+  const inputNickname = nicknameInput.value.trim();
+  if(!inputNickname){ nicknameInput.style.borderColor='#ff3b2f'; return; }
+  currentUser.name = inputNickname;
+  localStorage.setItem('nickname', currentUser.name);
+  nicknameModal.style.display='none';
+  currentUserElement.textContent = currentUser.name;
+  currentUserElement.style.color = currentUser.color;
+
+  // Notify server
+  socket.emit('userJoined', currentUser);
+}
+
+// Send message
+function sendMessage(){
+  if(!currentUser.name){ nicknameModal.style.display='flex'; return; }
+  const msg = messageInput.value.trim();
+  if(!msg) return;
+  const msgData = { 
+    id: currentUser.id,
+    name: currentUser.name,
+    text: msg,
+    color: currentUser.color
+  };
+  socket.emit('chatMessage', msgData);
+  messageInput.value='';
+  updateMessageCounter();
+}
+
+// Add message to DOM with animation
+function addMessage(data){
+  const div = document.createElement('div');
+  div.className = 'message';
+  if(data.id === currentUser.id) div.classList.add('message--self');
+  else if(data.id==='system') div.classList.add('message--system');
+
+  const ts = new Date().toLocaleTimeString();
+  div.innerHTML = `<span class="nickname" style="color:${data.color}">${data.name}:</span> ${data.text} <span class="timestamp">${ts}</span>`;
+
+  div.style.opacity = 0;
+  div.style.transform = 'translateY(20px)';
+  messagesContainer.appendChild(div);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  // Animate
+  requestAnimationFrame(()=>{ 
+    div.style.transition = 'all 0.3s ease';
+    div.style.opacity = 1;
+    div.style.transform = 'translateY(0)';
+  });
+}
+
+// Online users list
+function updateUsersList(users){
+  usersList.innerHTML = '';
+  users.forEach(u=>{
+    const li = document.createElement('li');
+    li.textContent = u.name;
+    li.style.color = u.color;
+    if(u.id===currentUser.id) li.classList.add('highlight');
+    usersList.appendChild(li);
+  });
+}
+
+// Socket.io events
+socket.on('chatMessage', addMessage);
+socket.on('updateUsers', updateUsersList);
+
+init();
+</script>
+
+
 </body>
 </html>
