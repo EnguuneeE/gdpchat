@@ -10,25 +10,38 @@ const io = new Server(server);
 // Serve static files from "public"
 app.use(express.static(path.join(__dirname, "public")));
 
-// Keep track of online users
+// Track online users
 let onlineUsers = [];
 
-// Socket.io connection
+/** Word filter → replaces banned words with hashes */
+function censorText(text) {
+  const banned = ["nigga", "nigger", "retard", "rape"];
+  let clean = text;
+  banned.forEach((bad) => {
+    const regex = new RegExp(bad, "gi");
+    clean = clean.replace(regex, (match) => "#".repeat(match.length));
+  });
+  return clean;
+}
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // When a user joins with a nickname
+  // When a user joins
   socket.on("userJoined", (user) => {
-    // Save the user with their socket ID
-    onlineUsers.push({ ...user, socketId: socket.id });
+    const safeUser = {
+      ...user,
+      name: censorText(user.name),
+      socketId: socket.id,
+    };
 
-    // Send updated user list to all clients
+    onlineUsers.push(safeUser);
+
     io.emit("updateUsers", onlineUsers);
 
-    // Broadcast a system message
     io.emit("chatMessage", {
       name: "System",
-      text: `${user.name} has joined the chat!`,
+      text: `${safeUser.name} has joined the chat!`,
       color: "#FFD700",
       id: "system",
     });
@@ -36,7 +49,8 @@ io.on("connection", (socket) => {
 
   // When a user sends a message
   socket.on("chatMessage", (msg) => {
-    io.emit("chatMessage", msg); // broadcast to everyone
+    const safeMsg = { ...msg, text: censorText(msg.text), name: censorText(msg.name) };
+    io.emit("chatMessage", safeMsg);
   });
 
   // When a user disconnects
@@ -45,10 +59,8 @@ io.on("connection", (socket) => {
     if (user) {
       onlineUsers = onlineUsers.filter((u) => u.socketId !== socket.id);
 
-      // Update all clients with new online users list
       io.emit("updateUsers", onlineUsers);
 
-      // Broadcast a system message
       io.emit("chatMessage", {
         name: "System",
         text: `${user.name} has left the chat.`,
